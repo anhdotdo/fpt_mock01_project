@@ -53,3 +53,7 @@ dkms.conf
 
 # Others
 main
+*.img
+*.pptm
+*.pptx
+*.txt
