@@ -42,11 +42,19 @@ void FAT_Get()
     printf("-------%x\n", Entry.StartingClusterNumber);
 }
 
+uint8_t FAT_isOutOfFile(uint32_t directoryAddress){
+    FAT_fseek(directoryAddress);
+    if(fgetc(fPtr) == 0x00){
+        return 1;                   // true = out of file
+    }
+    return 0;
+}
+
 /* Task 01: boot block
 input: floppy.img file
 output: FAT type, find root
 */
-void FAT_ReadBootBlock(){
+uint32_t FAT_ReadBootBlock(){
     uint8_t buffer[9];
     FAT_fseek(FILE_SYSTEM_TYPE);
     fgets(bootBlock.FileSystemType, FILE_SYSTEM_TYPE_LENGTH+1, fPtr);
@@ -64,14 +72,15 @@ void FAT_ReadBootBlock(){
     bootBlock.NumberOfBytesPerBlock = buffer[0] + buffer[1]*16*16;
     // printf("%d\n", bootBlock.NumberOfBytesPerBlock);
     bootBlock.RootDirectoryAddress = (bootBlock.NumberOfFATs * bootBlock.SizeOfFAT + 1) * bootBlock.NumberOfBytesPerBlock;
-    printf("%x\n", bootBlock.RootDirectoryAddress);
+    // printf("%x\n", bootBlock.RootDirectoryAddress);
+    return bootBlock.RootDirectoryAddress;
 }
 
 /* Task 02: root directory
 input: root directory address
 output: read entry, read data
 */
-void FAT_ReadRootDirectory(){
+void FAT_ReadDirectoryEntry(uint32_t directoryEntry){
     uint8_t idx;
     uint8_t *pU8 = NULL;
     uint8_t *pDirecEntry = (uint8_t*)malloc(sizeof(Directory_Entry_Type));
@@ -88,15 +97,16 @@ void FAT_ReadRootDirectory(){
     uint8_t firstDataBlockEntry;
     uint8_t offsetFirstDataBlockEntry;
 
-    FAT_fseek(bootBlock.RootDirectoryAddress + 0x20);
+    FAT_fseek(directoryEntry);
     fgets(pDirecEntry, sizeof(Directory_Entry_Type), fPtr);
     Directory_Entry_Type* pTemp = (Directory_Entry_Type*)pDirecEntry;
 
     // => file name
+    printf("------------\n");
     for(idx = 0; idx < 8; idx ++){
-        if(' ' == pTemp->FileName[idx]){
-            break;
-        }
+        // if(' ' == pTemp->FileName[idx]){
+        //     break;
+        // }
         printf("%c", pTemp->FileName[idx]);
     }
 
@@ -119,13 +129,22 @@ void FAT_ReadRootDirectory(){
     printf("\nFileDate fixed: %x", pTemp->FileDate);
     u16_temp = pTemp->FileDate;
     fileDate.day = u16_temp % (uint16_t)pow(2, 5);
-    printf("\n%d", fileDate.day);
+    printf("\nDay: %d", fileDate.day);
     u16_temp /= (uint16_t)pow(2, 5);
     fileDate.month = u16_temp % (uint16_t)pow(2, 4);
-    printf("\n%d", fileDate.month);
+    printf("\nMonth: %d", fileDate.month);
     u16_temp /= (uint16_t)pow(2, 4);
     fileDate.year = u16_temp;
-    printf("\n%d", fileDate.year);
+    printf("\nYear: %d", fileDate.year);
+
+    printf("\n");
+
+    // => if is not folder -> return 
+    if(pTemp->FileAttributes != 0x10){
+        return;
+    }
+
+
 
     // => starting cluster number
     printf("\nStartingClusterNumber: %x", pTemp->StartingClusterNumber);
@@ -169,7 +188,7 @@ void FAT_ReadRootDirectory(){
     printf("\nfirstDataBlockEntry: %x", firstDataBlockEntry);
     printf("\noffsetFirstDataBlockEntry: %x", offsetFirstDataBlockEntry);
 
-
+    printf("\n");
 }
 
 /* Task 03: manage directory and display

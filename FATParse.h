@@ -54,7 +54,8 @@ FAT_Status_Type FAT_OpenFile(const uint8_t* fileName);
 void FAT_CloseFile(void);
 void FAT_fseek(int64_t position);
 void FAT_Get();
-void FAT_ReadBootBlock();
-void FAT_ReadRootDirectory();
+uint8_t FAT_isOutOfFile(uint32_t directoryAddress);
+uint32_t FAT_ReadBootBlock();
+void FAT_ReadDirectoryEntry(uint32_t directoryEntry);
 
 #endif
