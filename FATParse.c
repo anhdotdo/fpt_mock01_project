@@ -92,10 +92,10 @@ void FAT_ReadDirectoryEntry(uint32_t directoryEntry){
     uint8_t buff[9];
     uint16_t maxEntriesOfRoot;
     uint16_t blocksRootOccupied;
-    uint8_t offsetConvertClusterNumber2BlockNumber;
-    uint8_t firstDataBlock;
-    uint8_t firstDataBlockEntry;
-    uint8_t offsetFirstDataBlockEntry;
+    uint16_t offsetConvertClusterNumber2BlockNumber;
+    uint16_t firstDataBlock;
+    uint16_t firstDataBlockEntry;
+    uint16_t offsetFirstDataBlockEntry;
 
     FAT_fseek(directoryEntry);
     fgets(pDirecEntry, sizeof(Directory_Entry_Type), fPtr);
@@ -135,13 +135,13 @@ void FAT_ReadDirectoryEntry(uint32_t directoryEntry){
     printf("\nMonth: %d", fileDate.month);
     u16_temp /= (uint16_t)pow(2, 4);
     fileDate.year = u16_temp;
-    printf("\nYear: %d", fileDate.year);
+    printf("\nYear: %d", 1980 + fileDate.year);
 
     printf("\n");
 
     // => if is not folder -> return 
-    if(pTemp->FileAttributes != 0x10){
-        return;
+    if(pTemp->FileAttributes == 0x10){
+        printf("FOLDER\n");
     }
 
 
@@ -160,10 +160,6 @@ void FAT_ReadDirectoryEntry(uint32_t directoryEntry){
 
     printf("\n");
 
-    /*
-    first cluster is cluster: 0x300
-    root directory at block: 19, address: 0x2600
-    */
     // => maximum number of entries in the root directory
     FAT_fseek(0x11);
     fgets(buff, 3, fPtr);
@@ -178,11 +174,9 @@ void FAT_ReadDirectoryEntry(uint32_t directoryEntry){
     offsetConvertClusterNumber2BlockNumber = (bootBlock.RootDirectoryAddress >> 9) + blocksRootOccupied - 2;
     printf("\noffsetConvertClusterNumber2BlockNumber: %x", offsetConvertClusterNumber2BlockNumber);
     // => the first data block of the file
-    // block: pTemp->StartingClusterNumber + offsetConvertClusterNumber2BlockNumber;
     firstDataBlock = pTemp->StartingClusterNumber + offsetConvertClusterNumber2BlockNumber;
     printf("\nfirstDataBlock: %x", firstDataBlock);
     // => the entry for the first cluster
-    // pTemp->StartingClusterNumber = 0xf4e;                        // test calculator => 0x10, 0x09
     firstDataBlockEntry = 1 + ((pTemp->StartingClusterNumber * 2) >> 9);
     offsetFirstDataBlockEntry = pTemp->StartingClusterNumber * 2 % 0x200;
     printf("\nfirstDataBlockEntry: %x", firstDataBlockEntry);
@@ -190,6 +184,32 @@ void FAT_ReadDirectoryEntry(uint32_t directoryEntry){
 
     printf("\n");
 }
+
+void FAT_DisplayDataBlock(uint32_t dataBlockAddress, uint16_t firstDataBlockEntry, uint16_t offsetFirstDataBlockEntry)
+{
+    uint16_t clusterEntry;
+    uint8_t firstByte, secondByte;
+    uint32_t address;
+    uint8_t buff[0x200 + 1];
+
+    address = firstDataBlockEntry * 0x200 + offsetFirstDataBlockEntry;
+    FAT_fseek(address);
+    fgets(buff, 3, fPtr);
+    clusterEntry = buff[0] + buff[1] * pow(16, 2);
+    while (clusterEntry != 0xFFFF)
+    {
+        // read a data block
+        FAT_fseek(dataBlockAddress += 0x01);
+        fgets(buff, 0x200 + 1, fPtr);
+        printf("%s", buff);
+
+        // read next two bytes of cluster entry 
+        FAT_fseek(address += 0x02);
+        fgets(buff, 3, fPtr);
+        clusterEntry = buff[0] + buff[1] * pow(16, 2);
+    }
+    printf("\n");
+} 
 
 /* Task 03: manage directory and display
 input:

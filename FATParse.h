@@ -12,6 +12,11 @@ typedef enum{
     FAT_FILE_NOT_EXIST,
     FAT_FILE_EXIST,
 }FAT_Status_Type;
+typedef enum
+{
+    FALSE,
+    TRUE,
+}FAT_Bool_Type;
 
 typedef struct
 {
@@ -57,5 +62,6 @@ void FAT_Get();
 uint8_t FAT_isOutOfFile(uint32_t directoryAddress);
 uint32_t FAT_ReadBootBlock();
 void FAT_ReadDirectoryEntry(uint32_t directoryEntry);
+void FAT_DisplayDataBlock(uint32_t dataBlockAddress, uint16_t firstDataBlockEntry, uint16_t offsetFirstDataBlockEntry);
 
 #endif

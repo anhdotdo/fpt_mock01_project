@@ -8,7 +8,8 @@ uint8_t main(void){
     FAT_Status_Type status;
     uint32_t rootDirectoryAddress;
     uint32_t directoryAddress;
-    uint8_t idx;
+    uint16_t idx;
+    uint16_t dataBlock;
 
     status = FAT_OpenFile("floppy.img");
     if(FAT_FILE_EXIST == status){
@@ -22,13 +23,8 @@ uint8_t main(void){
             FAT_ReadDirectoryEntry(directoryAddress);
             directoryAddress += 0x20;
         }
-        
 
-        // FAT_ReadRootDirectory(rootDirectoryAddress);
-        // FAT_ReadRootDirectory(rootDirectoryAddress + 0x20);
-
-        // FAT_fseek(0x2600);
-        // FAT_Get();
+        // FAT_DisplayDataBlock(0x41F * 0x200, 0x05, 0x00);
 
 
         FAT_CloseFile();
