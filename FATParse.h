@@ -20,7 +20,6 @@ typedef enum
 
 typedef struct
 {
-    /* data */
     uint8_t FileSystemType[9];              // including '\0'
     uint8_t NumberOfFATs;
     uint16_t SizeOfFAT;
@@ -28,30 +27,44 @@ typedef struct
     uint32_t RootDirectoryAddress;          // output
 }Boot_Block_Type;
 
-// typedef struct{
-//     uint8_t Directory_Entry[0x20];
-// }Directory_Entry_Type;
-
 typedef struct
 {
-    /* data */
     uint8_t FileName[8];
     uint8_t FileNameExtension[3];
     uint8_t FileAttributes;
-    uint8_t Reserved[10];
-    uint16_t FileTime;
-    uint16_t FileDate;
-    uint16_t StartingClusterNumber;
+    uint16_t Reserved;
+    uint16_t CreationTime;
+    uint16_t CreationDate;
+    uint16_t AccessDate;
+    uint16_t HightOrder2Bytes;
+    uint16_t ModifiedTime;
+    uint16_t ModifiedDate;
+    uint16_t FirstCluster;      // LowOrder2Bytes
     uint32_t FileSize;
+
+    // uint8_t FileName[8];
+    // uint8_t FileNameExtension[3];
+    // uint8_t FileAttributes;
+    // uint8_t Reserved[10];
+    // uint16_t FileTime;
+    // uint16_t FileDate;
+    // uint16_t StartingClusterNumber;
+    // uint32_t FileSize;
 }Directory_Entry_Type;
 
-typedef struct
+typedef struct 
 {
-    /* data */
-    uint8_t year;
-    uint8_t month;
-    uint8_t day;
-}FAT_File_Date_Type;
+    uint8_t Hour;
+    uint8_t Minute;
+    uint8_t Second;
+}FAT_Time_Type;
+
+typedef struct 
+{
+    uint8_t Year;
+    uint8_t Month;
+    uint8_t Day;
+}FAT_Date_Type;
 
 
 
@@ -61,7 +74,10 @@ void FAT_fseek(int64_t position);
 void FAT_Get();
 uint8_t FAT_isOutOfFile(uint32_t directoryAddress);
 uint32_t FAT_ReadBootBlock();
-void FAT_ReadDirectoryEntry(uint32_t directoryEntry);
-void FAT_DisplayDataBlock(uint32_t dataBlockAddress, uint16_t firstDataBlockEntry, uint16_t offsetFirstDataBlockEntry);
+Directory_Entry_Type FAT_ReadEntry(uint32_t entryAddress);
+void FAT_ReadRootDirectory(uint32_t rootDirectoryAddress);
+void FAT_DisplayDataCluster(uint16_t cluster);
+uint16_t FAT_GetNextCluster(uint32_t address, FAT_Bool_Type mode);
+void FAT_DisplayData(uint16_t firstCluster);
 
 #endif

@@ -38,8 +38,7 @@ void FAT_Get()
     Directory_Entry_Type Entry;
     fgets((char*)&Entry, sizeof(Directory_Entry_Type), fPtr);
 
-    // printf("-----%x\n", Entry.FileAttributes);
-    printf("-------%x\n", Entry.StartingClusterNumber);
+    printf("-----%x\n", Entry.FileAttributes);
 }
 
 uint8_t FAT_isOutOfFile(uint32_t directoryAddress){
@@ -80,26 +79,16 @@ uint32_t FAT_ReadBootBlock(){
 input: root directory address
 output: read entry, read data
 */
-void FAT_ReadDirectoryEntry(uint32_t directoryEntry){
-    uint8_t idx;
-    uint8_t *pU8 = NULL;
-    uint8_t *pDirecEntry = (uint8_t*)malloc(sizeof(Directory_Entry_Type));
-    uint8_t firstHexNumber, secondHexNumber;
-    uint16_t u16_temp;
-    FAT_File_Date_Type fileDate;
+Directory_Entry_Type FAT_ReadEntry(uint32_t entryAddress)
+{
+    Directory_Entry_Type Entry;
+    uint16_t idx;
+    FAT_Time_Type time;
+    FAT_Date_Type date;
+    uint8_t* ptrU8;
 
-    // variable for finding data blocks
-    uint8_t buff[9];
-    uint16_t maxEntriesOfRoot;
-    uint16_t blocksRootOccupied;
-    uint16_t offsetConvertClusterNumber2BlockNumber;
-    uint16_t firstDataBlock;
-    uint16_t firstDataBlockEntry;
-    uint16_t offsetFirstDataBlockEntry;
-
-    FAT_fseek(directoryEntry);
-    fgets(pDirecEntry, sizeof(Directory_Entry_Type), fPtr);
-    Directory_Entry_Type* pTemp = (Directory_Entry_Type*)pDirecEntry;
+    FAT_fseek(entryAddress);
+    fgets((char*)&Entry, sizeof(Directory_Entry_Type), fPtr);
 
     // => file name
     printf("------------\n");
@@ -107,108 +96,148 @@ void FAT_ReadDirectoryEntry(uint32_t directoryEntry){
         // if(' ' == pTemp->FileName[idx]){
         //     break;
         // }
-        printf("%c", pTemp->FileName[idx]);
+        printf("%c", Entry.FileName[idx]);
     }
 
     // => file extention
     printf(".");
     for(idx = 0; idx < 3; idx ++){
-        printf("%c", pTemp->FileNameExtension[idx]);
+        printf("%c", Entry.FileNameExtension[idx]);
     }
+    printf("\n");
 
     // => file attribute
-    printf("\nFileAttributes: %x", pTemp->FileAttributes);
+    printf("FileAttributes: 0x%x\n", Entry.FileAttributes);
 
-    // => file date
-    // uint16_t u16_temp;
-    // FAT_File_Date_Type fileDate;
+    // => file time (h-m-s:5-6-5)
+    // FAT_Time_Type time;
 
-    printf("\nFileDate: %x", pTemp->FileDate);
-    pU8 = (uint8_t*)&pTemp->FileDate;
-    pTemp->FileDate = ((uint16_t)pU8[0] << 8) + ((uint16_t)pU8[1] << 0);
-    printf("\nFileDate fixed: %x", pTemp->FileDate);
-    u16_temp = pTemp->FileDate;
-    fileDate.day = u16_temp % (uint16_t)pow(2, 5);
-    printf("\nDay: %d", fileDate.day);
-    u16_temp /= (uint16_t)pow(2, 5);
-    fileDate.month = u16_temp % (uint16_t)pow(2, 4);
-    printf("\nMonth: %d", fileDate.month);
-    u16_temp /= (uint16_t)pow(2, 4);
-    fileDate.year = u16_temp;
-    printf("\nYear: %d", 1980 + fileDate.year);
+    printf("CreationTime: 0x%x\n", Entry.CreationTime);
+    time.Second = (Entry.CreationTime % (uint16_t)pow(2, 5)) * 2;
+    Entry.CreationTime = Entry.CreationTime >> 5;
+    time.Minute = Entry.CreationTime % (uint16_t)pow(2, 6);
+    Entry.CreationTime = Entry.CreationTime >> 6;
+    time.Hour = Entry.CreationTime % (uint16_t)pow(2, 5);
+    printf("CreationTime fixed: %02d:%02d:%02d\n", time.Hour, time.Minute, time.Second);
 
-    printf("\n");
+    // => file date (y-m-d:7-4-5)
+    // FAT_Date_Type date;
 
-    // => if is not folder -> return 
-    if(pTemp->FileAttributes == 0x10){
-        printf("FOLDER\n");
-    }
+    // Entry.CreationDate = 0x3965;    // => 05/11/2008 test case
+    printf("CreationDate: 0x%x\n", Entry.CreationDate);
+    date.Day = Entry.CreationDate % (uint16_t)pow(2, 5);
+    Entry.CreationDate = Entry.CreationDate >> 5;
+    date.Month = Entry.CreationDate % (uint16_t)pow(2, 4);
+    Entry.CreationDate = Entry.CreationDate >> 4;
+    date.Year = Entry.CreationDate % (uint16_t)pow(2, 7);
+    printf("CreationDate fixed: %02d:%02d:%04d\n", date.Day, date.Month, date.Year + 1980);
 
+    // => modified time
+    printf("ModifiedTime: 0x%x\n", Entry.ModifiedTime);
+    time.Second = (Entry.ModifiedTime % (uint16_t)pow(2, 5)) * 2;
+    Entry.ModifiedTime = Entry.ModifiedTime >> 5;
+    time.Minute = Entry.ModifiedTime % (uint16_t)pow(2, 6);
+    Entry.ModifiedTime = Entry.ModifiedTime >> 6;
+    time.Hour = Entry.ModifiedTime % (uint16_t)pow(2, 5);
+    printf("ModifiedTime fixed: %02d:%02d:%02d\n", time.Hour, time.Minute, time.Second);
 
-
-    // => starting cluster number
-    printf("\nStartingClusterNumber: %x", pTemp->StartingClusterNumber);
-    pU8 = (uint8_t*)&pTemp->StartingClusterNumber;
-    pTemp->StartingClusterNumber = ((uint16_t)pU8[0] << 8) + ((uint16_t)pU8[1] << 0);
-    printf("\nStartingClusterNumber fixed: %x", pTemp->StartingClusterNumber);
+    // => modified date
+    printf("ModifiedDate: 0x%x\n", Entry.ModifiedDate);
+    date.Day = Entry.ModifiedDate % (uint16_t)pow(2, 5);
+    Entry.ModifiedDate = Entry.ModifiedDate >> 5;
+    date.Month = Entry.ModifiedDate % (uint16_t)pow(2, 4);
+    Entry.ModifiedDate = Entry.ModifiedDate >> 4;
+    date.Year = Entry.ModifiedDate % (uint16_t)pow(2, 7);
+    printf("ModifiedDate fixed: %02d:%02d:%04d\n", date.Day, date.Month, date.Year + 1980);
 
     // => file size
-    printf("\nFileSize: %x", pTemp->FileSize);
-    pU8 = (uint8_t*)&pTemp->FileSize;
-    pTemp->FileSize = ((uint32_t)pU8[0] << 24U) + ((uint32_t)pU8[1] << 16U) + ((uint32_t)pU8[2] << 8U) + ((uint32_t)pU8[4] << 0U);
-    printf("\nFileSize fixed: %x", pTemp->FileSize);
+    // uint8_t* ptrU8;
 
-    printf("\n");
+    printf("FileSize: 0x%x\n", Entry.FileSize);
+    ptrU8 = (uint8_t*)&Entry.FileSize; 
+    Entry.FileSize = ((uint32_t)ptrU8[0] << 24) + ((uint32_t)ptrU8[1] << 16) + ((uint32_t)ptrU8[2] << 8) + ((uint32_t)ptrU8[3] << 0);
+    printf("FileSize fixed: %d\n", Entry.FileSize);
+ 
+    // => cluster number
+    printf("FirstCluster: 0x%x\n", Entry.FirstCluster);
+    ptrU8 = (uint8_t*)&Entry.FirstCluster;
+    Entry.FirstCluster = (((uint16_t)ptrU8[0] & 0x00FF) << 8) + (((uint16_t)ptrU8[1] & 0xFF) << 0);
+    printf("FirstCluster fixed: 0x%x\n", Entry.FirstCluster);
 
-    // => maximum number of entries in the root directory
-    FAT_fseek(0x11);
-    fgets(buff, 3, fPtr);
-    printf("\n%02x-%02x", buff[0], buff[1]);
-    u16_temp = buff[0] + buff[1] * (uint16_t)pow(2, 8);
-    maxEntriesOfRoot = u16_temp;
-    printf("\nmaxEntriesOfRoot: %04x", u16_temp);
-    // => number of blocks occupied by the root directory
-    blocksRootOccupied = (maxEntriesOfRoot * 0x20) >> 9;
-    printf("\nblocksRootOccupied: %d", blocksRootOccupied);
-    // => convert a cluster number (which is what appears in the root directory) to a block number
-    offsetConvertClusterNumber2BlockNumber = (bootBlock.RootDirectoryAddress >> 9) + blocksRootOccupied - 2;
-    printf("\noffsetConvertClusterNumber2BlockNumber: %x", offsetConvertClusterNumber2BlockNumber);
-    // => the first data block of the file
-    firstDataBlock = pTemp->StartingClusterNumber + offsetConvertClusterNumber2BlockNumber;
-    printf("\nfirstDataBlock: %x", firstDataBlock);
-    // => the entry for the first cluster
-    firstDataBlockEntry = 1 + ((pTemp->StartingClusterNumber * 2) >> 9);
-    offsetFirstDataBlockEntry = pTemp->StartingClusterNumber * 2 % 0x200;
-    printf("\nfirstDataBlockEntry: %x", firstDataBlockEntry);
-    printf("\noffsetFirstDataBlockEntry: %x", offsetFirstDataBlockEntry);
+    // => if is not folder -> return 
+    // if(pTemp->FileAttributes == 0x10){
+    //     printf("FOLDER\n");
+    // }
 
-    printf("\n");
+    return Entry;
 }
 
-void FAT_DisplayDataBlock(uint32_t dataBlockAddress, uint16_t firstDataBlockEntry, uint16_t offsetFirstDataBlockEntry)
+void FAT_ReadRootDirectory(uint32_t rootDirectoryAddress)
 {
-    uint16_t clusterEntry;
-    uint8_t firstByte, secondByte;
-    uint32_t address;
-    uint8_t buff[0x200 + 1];
+    Directory_Entry_Type Entry;
+    uint32_t entryAddress = rootDirectoryAddress;
 
-    address = firstDataBlockEntry * 0x200 + offsetFirstDataBlockEntry;
-    FAT_fseek(address);
-    fgets(buff, 3, fPtr);
-    clusterEntry = buff[0] + buff[1] * pow(16, 2);
-    while (clusterEntry != 0xFFFF)
+    FAT_fseek(entryAddress);
+    Entry = FAT_ReadEntry(entryAddress);
+    while (Entry.FileName[0] != 0x00)
     {
-        // read a data block
-        FAT_fseek(dataBlockAddress += 0x01);
-        fgets(buff, 0x200 + 1, fPtr);
-        printf("%s", buff);
-
-        // read next two bytes of cluster entry 
-        FAT_fseek(address += 0x02);
-        fgets(buff, 3, fPtr);
-        clusterEntry = buff[0] + buff[1] * pow(16, 2);
+        if(Entry.FileName[0] == 0xE5){
+            continue;
+        }
+        FAT_fseek(entryAddress += 0x20);
+        // printf("entryAddress: 0x%x\n", entryAddress);
+        Entry = FAT_ReadEntry(entryAddress);
     }
-    printf("\n");
+    
+    // 
+
+}
+
+void FAT_DisplayDataCluster(uint16_t cluster)
+{
+    uint32_t address;
+    uint8_t data[0x200 + 1];
+    // cluster != 0x00
+    address = 0x4200 + cluster;
+
+    FAT_fseek(address);
+    fgets(data, 0x200 + 1, fPtr);
+    printf("%s\n", data);
+}
+
+uint16_t FAT_GetNextCluster(uint32_t address, FAT_Bool_Type mode)
+{
+    uint16_t nextCluster;
+    uint8_t byteArr[3];             // [0]: previous byte, [1]: current byte
+
+    FAT_fseek(address - 1);
+    fgets(byteArr, 3, fPtr);
+    if(mode == TRUE)                // high-order nibble
+    {
+        nextCluster = (((uint16_t)byteArr[1] & 0x00FF) << 4) + (((uint16_t)byteArr[0] & 0x00FF) >> 4);
+        nextCluster = nextCluster & 0x0FFF;
+    }
+    else
+    {   
+        nextCluster = (((uint16_t)(byteArr[1] & 0x00FF) << 4) << 4) + byteArr[0];
+        nextCluster = nextCluster & 0x0FFF;
+    }
+
+    return nextCluster;
+}
+
+void FAT_DisplayData(uint16_t firstCluster)
+{
+    uint16_t cluster = firstCluster;
+    uint32_t FatEntryAddress;
+    FAT_Bool_Type mode = TRUE;
+
+    while(cluster != 0xFFF){
+        FAT_DisplayDataCluster(cluster);
+        FatEntryAddress = 0x200 + (cluster * 1,5 + 1);
+        cluster = FAT_GetNextCluster(FatEntryAddress, mode);
+        mode = ~mode;
+    }
 } 
 
 /* Task 03: manage directory and display

@@ -7,24 +7,20 @@ uint8_t main(void){
     // root directory: 0x2600
     FAT_Status_Type status;
     uint32_t rootDirectoryAddress;
-    uint32_t directoryAddress;
+    uint32_t entryAddress;
+
     uint16_t idx;
     uint16_t dataBlock;
 
     status = FAT_OpenFile("floppy.img");
     if(FAT_FILE_EXIST == status){
         rootDirectoryAddress = FAT_ReadBootBlock();
-        directoryAddress = rootDirectoryAddress;
-        while (1)
-        {
-            if(FAT_isOutOfFile(directoryAddress)){
-                break;
-            }
-            FAT_ReadDirectoryEntry(directoryAddress);
-            directoryAddress += 0x20;
-        }
-
-        // FAT_DisplayDataBlock(0x41F * 0x200, 0x05, 0x00);
+        entryAddress = rootDirectoryAddress;
+        
+        // FAT_ReadRootDirectory(rootDirectoryAddress);
+        // FAT_DisplayDataCluster(0x49);
+        FAT_DisplayData(0x500);
+        // printf("0x%x\n", FAT_GetNextCluster(0x026E, 1));
 
 
         FAT_CloseFile();
