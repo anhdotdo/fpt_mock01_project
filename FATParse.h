@@ -41,15 +41,6 @@ typedef struct
     uint16_t ModifiedDate;
     uint16_t FirstCluster;      // LowOrder2Bytes
     uint32_t FileSize;
-
-    // uint8_t FileName[8];
-    // uint8_t FileNameExtension[3];
-    // uint8_t FileAttributes;
-    // uint8_t Reserved[10];
-    // uint16_t FileTime;
-    // uint16_t FileDate;
-    // uint16_t StartingClusterNumber;
-    // uint32_t FileSize;
 }Directory_Entry_Type;
 
 typedef struct 
@@ -77,7 +68,7 @@ uint32_t FAT_ReadBootBlock();
 Directory_Entry_Type FAT_ReadEntry(uint32_t entryAddress);
 void FAT_ReadRootDirectory(uint32_t rootDirectoryAddress);
 void FAT_DisplayDataCluster(uint16_t cluster);
-uint16_t FAT_GetNextCluster(uint32_t address, FAT_Bool_Type mode);
+uint16_t FAT_GetNextCluster(uint16_t cluster);
 void FAT_DisplayData(uint16_t firstCluster);
 
 #endif

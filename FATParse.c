@@ -36,9 +36,16 @@ void FAT_fseek(int64_t position){
 void FAT_Get()
 {
     Directory_Entry_Type Entry;
+    FAT_fseek(0x2740);
     fgets((char*)&Entry, sizeof(Directory_Entry_Type), fPtr);
 
-    printf("-----%x\n", Entry.FileAttributes);
+    printf("-----0x%x\n", Entry.FirstCluster);
+
+    // => test
+    uint8_t buff[9];
+    FAT_fseek(0x2740 + 26);
+    fgets(buff, 3, fPtr);
+    printf("test: 0x%x, 0x%x\n", buff[0], buff[1]);
 }
 
 uint8_t FAT_isOutOfFile(uint32_t directoryAddress){
@@ -154,21 +161,10 @@ Directory_Entry_Type FAT_ReadEntry(uint32_t entryAddress)
     // uint8_t* ptrU8;
 
     printf("FileSize: 0x%x\n", Entry.FileSize);
-    ptrU8 = (uint8_t*)&Entry.FileSize; 
-    Entry.FileSize = ((uint32_t)ptrU8[0] << 24) + ((uint32_t)ptrU8[1] << 16) + ((uint32_t)ptrU8[2] << 8) + ((uint32_t)ptrU8[3] << 0);
-    printf("FileSize fixed: %d\n", Entry.FileSize);
  
     // => cluster number
     printf("FirstCluster: 0x%x\n", Entry.FirstCluster);
-    ptrU8 = (uint8_t*)&Entry.FirstCluster;
-    Entry.FirstCluster = (((uint16_t)ptrU8[0] & 0x00FF) << 8) + (((uint16_t)ptrU8[1] & 0xFF) << 0);
-    printf("FirstCluster fixed: 0x%x\n", Entry.FirstCluster);
-
-    // => if is not folder -> return 
-    // if(pTemp->FileAttributes == 0x10){
-    //     printf("FOLDER\n");
-    // }
-
+    
     return Entry;
 }
 
@@ -188,39 +184,35 @@ void FAT_ReadRootDirectory(uint32_t rootDirectoryAddress)
         // printf("entryAddress: 0x%x\n", entryAddress);
         Entry = FAT_ReadEntry(entryAddress);
     }
-    
-    // 
-
 }
 
 void FAT_DisplayDataCluster(uint16_t cluster)
 {
     uint32_t address;
     uint8_t data[0x200 + 1];
-    // cluster != 0x00
-    address = 0x4200 + cluster;
 
+    address = (33 + cluster) * 0x200;                   // ??? 33
     FAT_fseek(address);
     fgets(data, 0x200 + 1, fPtr);
     printf("%s\n", data);
 }
 
-uint16_t FAT_GetNextCluster(uint32_t address, FAT_Bool_Type mode)
+uint16_t FAT_GetNextCluster(uint16_t cluster)
 {
     uint16_t nextCluster;
     uint8_t byteArr[3];             // [0]: previous byte, [1]: current byte
+    uint32_t address;
 
-    FAT_fseek(address - 1);
+    address = 0x200 + cluster * 1.5;
+    FAT_fseek(address);           // ?? 0x200, 1,5
     fgets(byteArr, 3, fPtr);
-    if(mode == TRUE)                // high-order nibble
-    {
-        nextCluster = (((uint16_t)byteArr[1] & 0x00FF) << 4) + (((uint16_t)byteArr[0] & 0x00FF) >> 4);
-        nextCluster = nextCluster & 0x0FFF;
-    }
-    else
+    if(cluster % 2 == 0)                // low-order nibble
     {   
-        nextCluster = (((uint16_t)(byteArr[1] & 0x00FF) << 4) << 4) + byteArr[0];
-        nextCluster = nextCluster & 0x0FFF;
+        nextCluster = byteArr[0] | (((uint16_t)byteArr[1] & 0xF) << 8);
+    }
+    else                                // high-order nibble
+    {   
+        nextCluster = ((byteArr[0] & 0xF0) >> 4) | (((uint16_t)byteArr[1] & 0xFF) << 4);
     }
 
     return nextCluster;
@@ -229,14 +221,10 @@ uint16_t FAT_GetNextCluster(uint32_t address, FAT_Bool_Type mode)
 void FAT_DisplayData(uint16_t firstCluster)
 {
     uint16_t cluster = firstCluster;
-    uint32_t FatEntryAddress;
-    FAT_Bool_Type mode = TRUE;
 
     while(cluster != 0xFFF){
         FAT_DisplayDataCluster(cluster);
-        FatEntryAddress = 0x200 + (cluster * 1,5 + 1);
-        cluster = FAT_GetNextCluster(FatEntryAddress, mode);
-        mode = ~mode;
+        cluster = FAT_GetNextCluster(cluster);
     }
 } 
 
