@@ -2,6 +2,7 @@
 #include<stdio.h>
 #include<math.h>
 #include"FATParse.h"
+#include"IOFAT.h"
 
 uint8_t main(void){
     // root directory: 0x2600
@@ -15,13 +16,11 @@ uint8_t main(void){
         // FAT_ReadRootDirectory(rootDirectoryAddress);
         // FAT_ReadRootDirectory((0x4f2 - 2 + 33) * 0x200);
         // FAT_DisplayDataCluster(0xcaf0);
-        FAT_DisplayData(0x2eb);
+        // FAT_DisplayData(0x02);
         // printf("0x%x\n", FAT_GetNextCluster(0x026E, 1));
         // printf("0x%x\n", FAT_GetNextCluster(0x09));
 
-        // FAT_fseek(0x2700);
-        // FAT_Get();
-
+        IO_DisplayFile(0x2eb);
 
         FAT_CloseFile();
     }
