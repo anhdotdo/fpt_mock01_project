@@ -1,5 +1,7 @@
 #include"IOFAT.h"
-#include"FATParse.h"
+
+extern Directory_Entry_Type entryArray[];                 
+extern uint32_t len;    
 
 void IO_DisplayEntry(uint32_t entryAddress)
 {
@@ -74,3 +76,95 @@ void IO_DisplayFile(uint16_t firstCluster)
         cluster = FAT_GetNextCluster(cluster);
     }
 } 
+
+void IO_DisplayDir()                 // folder content: files, subdirs
+{
+    uint32_t idx, i;
+    Directory_Entry_Type Entry;
+    FAT_Time_Type time;
+    FAT_Date_Type date;
+    uint8_t *space = " ";
+
+    // => title: fat12, name, type, size, date, time
+    printf("                      FILE SYSTEM TYPE: FAT12\n");
+    printf("----------------------------------------------------------------------\n");
+    printf("\n");
+    printf("\n");
+    printf("\n");
+    printf("|Name|%10s|Type|%10s|Size|%10s|Date|%10s|Time|\n", space, space, space, space);
+    for(idx = 0; idx < len; idx++){
+        Entry = entryArray[idx];
+
+        // => index
+        printf("%2d. ", idx + 1);
+        
+        // => file name
+        for(i = 0; i < 8; i ++){
+            printf("%c", Entry.FileName[i]);
+        }
+        printf("%4s", space);
+
+        // => type
+        if(Entry.FileAttributes == 0x10){
+            printf("Folder%10s", space);
+        }
+        else
+        {
+            for(i = 0; i < 3; i ++){
+                printf("%c", Entry.FileNameExtension[i]);
+            }
+            printf("%13s", space);
+        }
+
+        // => size
+        if(Entry.FileAttributes == 0x00){
+            printf("%-16d", Entry.FileSize);
+        }
+        else
+        {
+            printf("%16s", space);
+        }
+
+        // => date
+        date.Day = Entry.ModifiedDate % (uint16_t)pow(2, 5);
+        Entry.ModifiedDate = Entry.ModifiedDate >> 5;
+        date.Month = Entry.ModifiedDate % (uint16_t)pow(2, 4);
+        Entry.ModifiedDate = Entry.ModifiedDate >> 4;
+        date.Year = Entry.ModifiedDate % (uint16_t)pow(2, 7);
+        printf("%02d:%02d:%04d", date.Day, date.Month, date.Year + 1980);
+        printf("%6s", space);
+
+        // => time
+        time.Second = (Entry.ModifiedTime % (uint16_t)pow(2, 5)) * 2;
+        Entry.ModifiedTime = Entry.ModifiedTime >> 5;
+        time.Minute = Entry.ModifiedTime % (uint16_t)pow(2, 6);
+        Entry.ModifiedTime = Entry.ModifiedTime >> 6;
+        time.Hour = Entry.ModifiedTime % (uint16_t)pow(2, 5);
+        printf("%02d:%02d:%02d", time.Hour, time.Minute, time.Second);
+
+        printf("\n");
+    }
+}
+
+void IO_SolveUserInput(uint8_t userInput)
+{
+    uint32_t dirAddr;
+
+    Directory_Entry_Type Entry;
+    Entry = entryArray[userInput - 1];
+    // printf("0x%x", Entry.FileAttributes);
+
+    if(Entry.FileAttributes == 0x10)
+    {
+        dirAddr = FAT_GetSubDirAdd(Entry.FirstCluster);
+        FAT_ReadRootDirectory(dirAddr);
+        IO_DisplayDir();
+
+        // => file
+        // => folder
+    }
+    else            // = 0x00
+    {
+       IO_DisplayFile(Entry.FirstCluster); 
+    }
+}

@@ -13,8 +13,14 @@
 static FILE *fPtr = NULL;                                               // global variable
 static Boot_Block_Type bootBlock;
 
-static Node *HEAD = NULL;
-static uint32_t len = 0;
+Directory_Entry_Type entryArray[100];                 
+uint32_t len = 0;          
+
+// => get global variable
+uint32_t FAT_GetLen()
+{
+    return len;
+}
 
 // function to open file                                                // prototype
 FAT_Status_Type FAT_OpenFile(const uint8_t* fileName){
@@ -83,6 +89,8 @@ void FAT_ReadRootDirectory(uint32_t rootDirectoryAddress)
 {
     Directory_Entry_Type Entry;
     uint32_t entryAddress = rootDirectoryAddress;
+    uint32_t idx = 0;
+    len = 0;
 
     FAT_fseek(entryAddress);
     Entry = FAT_ReadEntry(entryAddress);
@@ -91,8 +99,12 @@ void FAT_ReadRootDirectory(uint32_t rootDirectoryAddress)
         if(Entry.FileName[0] == 0xE5){
             continue;
         }
-        // => display entry ...
-
+        // => read dir entry and save in List
+        if(Entry.FileAttributes != 0x0F){
+            entryArray[idx] = Entry;
+            idx++; 
+            len++;
+        }
 
         FAT_fseek(entryAddress += 0x20);
         Entry = FAT_ReadEntry(entryAddress);
@@ -119,14 +131,14 @@ uint16_t FAT_GetNextCluster(uint16_t cluster)
     return nextCluster;
 }
 
-// => linked list
-Node* List_getList(){
-    return HEAD;
+uint32_t FAT_GetSubDirAdd(uint16_t firstCluster)
+{
+    uint32_t address;
+    address = (33 + firstCluster - 2) * 0x200;
+    return address;
 }
 
-uint32_t List_getLength(){
-    return len;
-}
+
 
 /* Task 03: manage directory and display
 input:

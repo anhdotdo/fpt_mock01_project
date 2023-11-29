@@ -57,15 +57,12 @@ typedef struct
     uint8_t Day;
 }FAT_Date_Type;
 
-typedef struct node
-{
-    Directory_Entry_Type Entry;
-    struct node *pNext;
-}Node;
+
 
 // static Node *HEAD = NULL;
 // static uint32_t len = 0;
 
+uint32_t FAT_GetLen();
 
 FAT_Status_Type FAT_OpenFile(const uint8_t* fileName);              // open fat file
 void FAT_CloseFile(void);                                           // close fat file
@@ -75,5 +72,6 @@ uint32_t FAT_ReadBootBlock();                                       // read boot
 Directory_Entry_Type FAT_ReadEntry(uint32_t entryAddress);          // read a directory entry
 void FAT_ReadRootDirectory(uint32_t rootDirectoryAddress);          // read root directory
 uint16_t FAT_GetNextCluster(uint16_t cluster);                      // find the next data cluster
+uint32_t FAT_GetSubDirAdd(uint16_t firstCluster);
 
 #endif
