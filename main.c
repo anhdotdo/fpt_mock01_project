@@ -8,29 +8,30 @@ uint8_t main(void){
     // root directory: 0x2600
     FAT_Status_Type status;
     uint32_t rootDirectoryAddress;
-    uint32_t lengthOfCurrentDir;
-    uint8_t userInput;
 
     status = FAT_OpenFile("floppy.img");
     if(FAT_FILE_EXIST == status){
         rootDirectoryAddress = FAT_ReadBootBlock();
 
-        FAT_ReadRootDirectory(rootDirectoryAddress);
-        lengthOfCurrentDir = FAT_GetLen();
-        IO_DisplayDir();
+        IO_SolveUserInput(rootDirectoryAddress);
 
-        do
-        {
-            printf(" 0. Exit\n");
-            printf("Pls enter your number: ");
-            scanf("%hhd", &userInput);
 
-            if(userInput >= 1 && userInput <= lengthOfCurrentDir)
-            {
-                    IO_SolveUserInput(userInput);
-            }
+        // FAT_ReadRootDirectory(rootDirectoryAddress);
+        // lengthOfCurrentDir = FAT_GetLen();
+        // IO_DisplayDir();
 
-        } while (userInput != 0);
+        // do
+        // {
+        //     printf(" 0. Exit\n");
+        //     printf("Pls enter your number: ");
+        //     scanf("%hhd", &userInput);
+
+        //     if(userInput >= 1 && userInput <= lengthOfCurrentDir)
+        //     {
+        //             IO_SolveUserInput(userInput);
+        //     }
+
+        // } while (userInput != 0);
         
         
         // FAT_ReadRootDirectory(rootDirectoryAddress);

@@ -70,7 +70,7 @@ void FAT_fseek(int64_t position);                                   // move to a
 FILE *FAT_GetFilePtr();
 uint32_t FAT_ReadBootBlock();                                       // read boot block
 Directory_Entry_Type FAT_ReadEntry(uint32_t entryAddress);          // read a directory entry
-void FAT_ReadRootDirectory(uint32_t rootDirectoryAddress);          // read root directory
+void FAT_ReadCurDirectory(uint32_t rootDirectoryAddress);
 uint16_t FAT_GetNextCluster(uint16_t cluster);                      // find the next data cluster
 uint32_t FAT_GetSubDirAdd(uint16_t firstCluster);
 

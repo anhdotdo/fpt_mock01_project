@@ -61,7 +61,7 @@ void IO_DisplayDataCluster(uint16_t cluster)
     uint8_t data[0x200 + 1];
     uint32_t address;
 
-    address = (33 + cluster) * 0x200;                   // ??? 33
+    address = (33 + cluster - 2) * 0x200;                   // ??? 33
     FAT_fseek(address);
     fgets(data, 0x200 + 1, FAT_GetFilePtr());
     printf("%s\n", data);
@@ -77,7 +77,7 @@ void IO_DisplayFile(uint16_t firstCluster)
     }
 } 
 
-void IO_DisplayDir()                 // folder content: files, subdirs
+void IO_DisplayCurDir()                 // folder content: files, subdirs
 {
     uint32_t idx, i;
     Directory_Entry_Type Entry;
@@ -146,25 +146,63 @@ void IO_DisplayDir()                 // folder content: files, subdirs
     }
 }
 
-void IO_SolveUserInput(uint8_t userInput)
+void IO_SolveUserInput(uint32_t rootDirAddr)
 {
+    uint8_t userIn;
     uint32_t dirAddr;
-
     Directory_Entry_Type Entry;
-    Entry = entryArray[userInput - 1];
-    // printf("0x%x", Entry.FileAttributes);
+    FAT_Bool_Type isSubDir = FALSE;             // default is root dir
 
-    if(Entry.FileAttributes == 0x10)
+    dirAddr = rootDirAddr;
+    while(1)
     {
-        dirAddr = FAT_GetSubDirAdd(Entry.FirstCluster);
-        FAT_ReadRootDirectory(dirAddr);
-        IO_DisplayDir();
+        // => read entry
+        FAT_ReadCurDirectory(dirAddr);
+        IO_DisplayCurDir();
 
-        // => file
-        // => folder
-    }
-    else            // = 0x00
-    {
-       IO_DisplayFile(Entry.FirstCluster); 
+        // => enter user input
+        if(isSubDir){
+            printf("\n\n 0. Back\n");
+        }else{
+            printf("\n\n 0. Exit\n");
+        }
+        printf("Pls enter your number: ");
+        scanf("%hhd", &userIn);
+
+        if(userIn == 0)
+        {
+            if(isSubDir)
+            {
+                // =>back to previous dir <=> userIn = 2
+                userIn = 2;
+                Entry = entryArray[userIn - 1];
+                if(Entry.FirstCluster == 0x00){
+                    isSubDir = FALSE;
+                }
+                dirAddr = (Entry.FirstCluster + 33 - 2) * 0x200;            // ???
+            }
+            else
+            {
+                // =>Exit
+                break;
+            }
+        }
+        else if(userIn >= 1 && userIn <= len)
+        {
+            Entry = entryArray[userIn - 1];
+            if(Entry.FileAttributes == 0x10)
+            {
+                isSubDir = TRUE;
+                dirAddr = (Entry.FirstCluster + 33 - 2) * 0x200;            // ???
+            }   
+            else
+            {
+                IO_DisplayFile(Entry.FirstCluster); 
+                // => enter 0 to back
+                printf(" 0. Back\n");
+                printf("Pls enter your number: ");
+                scanf("%hhd", &userIn);
+            }
+        }
     }
 }

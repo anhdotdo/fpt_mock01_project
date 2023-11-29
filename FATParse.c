@@ -85,7 +85,7 @@ Directory_Entry_Type FAT_ReadEntry(uint32_t entryAddress)
     return Entry;
 }
 
-void FAT_ReadRootDirectory(uint32_t rootDirectoryAddress)
+void FAT_ReadCurDirectory(uint32_t rootDirectoryAddress)
 {
     Directory_Entry_Type Entry;
     uint32_t entryAddress = rootDirectoryAddress;
