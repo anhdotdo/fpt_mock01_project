@@ -137,10 +137,3 @@ uint32_t FAT_GetSubDirAdd(uint16_t firstCluster)
     address = (33 + firstCluster - 2) * 0x200;
     return address;
 }
-
-
-
-/* Task 03: manage directory and display
-input:
-output:
-*/
