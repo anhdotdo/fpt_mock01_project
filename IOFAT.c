@@ -114,7 +114,11 @@ void IO_SolveUserInput(uint32_t rootDirAddr)
             printf("\n\n 0. Exit\n");
         }
         printf("Pls enter your number: ");
-        scanf("%hhd", &userIn);
+        // => userIn must be valid: >= 0 && <= len
+        do
+        {
+            scanf("%hhd", &userIn);
+        } while (!(userIn >= 0 && userIn <= len));
 
         if(userIn == 0)
         {
@@ -155,7 +159,11 @@ void IO_SolveUserInput(uint32_t rootDirAddr)
                 // => enter 0 to back
                 printf(" 0. Back\n");
                 printf("Pls enter your number: ");
-                scanf("%hhd", &userIn);
+                // => userIn must be 0
+                do
+                {
+                    scanf("%hhd", &userIn);
+                } while (userIn != 0);
             }
         }
     }
