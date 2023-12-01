@@ -5,7 +5,6 @@
 #include"IOFAT.h"
 
 uint8_t main(void){
-    // root directory: 0x2600
     FAT_Status_Type status;
     uint32_t rootDirectoryAddress;
 

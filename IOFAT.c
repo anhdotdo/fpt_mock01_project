@@ -5,12 +5,12 @@ extern uint32_t len;
 
 void IO_DisplayDataCluster(uint16_t cluster)
 {
-    uint8_t data[0x200 + 1];
+    uint8_t data[NUMBER_OF_BYTES_PER_BLOCK + 1];
     uint32_t address;
 
-    address = (33 + cluster - 2) * 0x200;                   // ??? 33
+    address = (cluster + STARTING_DATA_AREA) * NUMBER_OF_BYTES_PER_BLOCK;   // (33 + cluster - 2) * 0x200
     FAT_fseek(address);
-    fgets(data, 0x200 + 1, FAT_GetFilePtr());
+    fgets(data, NUMBER_OF_BYTES_PER_BLOCK + 1, FAT_GetFilePtr());
     printf("%s\n", data);
 }
 
@@ -33,7 +33,7 @@ void IO_DisplayCurDir()                 // folder content: files, subdirs
     uint8_t *space = " ";
 
     // => title: fat12, name, type, size, date, time
-    printf("                      FILE SYSTEM TYPE: FAT12\n");
+    printf("                      FILE SYSTEM TYPE: %s\n", FAT_GetBootBlock().FileSystemType);
     printf("----------------------------------------------------------------------\n");
     printf("\n");
     printf("\n");
@@ -78,7 +78,7 @@ void IO_DisplayCurDir()                 // folder content: files, subdirs
         date.Month = Entry.ModifiedDate % (uint16_t)pow(2, 4);
         Entry.ModifiedDate = Entry.ModifiedDate >> 4;
         date.Year = Entry.ModifiedDate % (uint16_t)pow(2, 7);
-        printf("%02d:%02d:%04d", date.Day, date.Month, date.Year + 1980);
+        printf("%02d/%02d/%04d", date.Day, date.Month, date.Year + BASE_YEAR);
         printf("%6s", space);
 
         // => time
@@ -124,13 +124,14 @@ void IO_SolveUserInput(uint32_t rootDirAddr)
         {
             if(isSubDir)
             {
-                // =>back to previous dir <=> userIn = 2
+                // =>back to previous dir <=> userIn = 2 & Entry.FileAttributes = 0x10
                 userIn = 2;
                 Entry = entryArray[userIn - 1];
                 if(Entry.FirstCluster == 0x00){
                     isSubDir = FALSE;
                     dirAddr = rootDirAddr;
                 }else{
+                    isSubDir = TRUE;
                     dirAddr = FAT_GetSubDirAdd(Entry.FirstCluster);
                 }
             }
