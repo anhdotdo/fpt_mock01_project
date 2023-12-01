@@ -53,8 +53,9 @@ dkms.conf
 
 # Others
 main
-*.img
 *.pptm
 *.pptx
 *.txt
 *.pdf
+!Mock01Group03.pptx
+
