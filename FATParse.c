@@ -25,6 +25,7 @@ Boot_Block_Type FAT_GetBootBlock()
 // function to open file                                                // prototype
 FAT_Status_Type FAT_OpenFile(const uint8_t* fileName){
     FAT_Status_Type status = FAT_FILE_EXIST;
+    
     fPtr = fopen(fileName, "r");
     if(fPtr == NULL){
         status = FAT_FILE_NOT_EXIST;
