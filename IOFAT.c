@@ -46,7 +46,7 @@ void IO_DisplayCurDir()                 // folder content: files, subdirs
 
         // => index                                 // ocupied 4 chars
         // number of files inside is unknown, consider max size = 100
-        printf("%2d", idx);
+        printf("%2d", idx + 1);
         buff[0] = '.';
         buff[1] = ' ';                 
         
