@@ -31,6 +31,7 @@ void IO_DisplayCurDir()                 // folder content: files, subdirs
     FAT_Time_Type time;
     FAT_Date_Type date;
     uint8_t *space = " ";
+    uint8_t buff[30];
 
     // => title: fat12, name, type, size, date, time
     printf("                      FILE SYSTEM TYPE: %s\n", FAT_GetBootBlock().FileSystemType);
@@ -38,38 +39,48 @@ void IO_DisplayCurDir()                 // folder content: files, subdirs
     printf("\n");
     printf("\n");
     printf("\n");
-    printf("|Name|%10s|Type|%10s|Size|%10s|Date|%10s|Time|\n", space, space, space, space);
+    // printf("|Name|%10s|Type|%10s|Size|%10s|Date|%10s|Time|\n", space, space, space, space);
+    printf("|Name|%24s|Type|%24s|Size|%24s|Date|%24s|Time|\n", space, space, space, space);
     for(idx = 0; idx < len; idx++){
         Entry = entryArray[idx];
 
-        // => index
-        printf("%2d. ", idx + 1);
+        // => index                                 // ocupied 4 chars
+        // number of files inside is unknown, consider max size = 100
+        printf("%2d", idx);
+        buff[0] = '.';
+        buff[1] = ' ';                 
         
-        // => file name
+        // => file name                             // 8
         for(i = 0; i < 8; i ++){
-            printf("%c", Entry.FileName[i]);
+            buff[2 + i] = Entry.FileName[i];
         }
-        printf("%4s", space);
+        buff[2 + i] = '\0';
+        printf("%-28s", buff);                      // 30 - 2
 
-        // => type
-        if(Entry.FileAttributes == 0x10){
-            printf("Folder%10s", space);
+        // => type                                  
+        if(Entry.FileAttributes == 0x10){           // 6
+            buff[0] = 'F';
+            buff[1] = 'o';
+            buff[2] = 'l';
+            buff[3] = 'd';
+            buff[4] = 'e';
+            buff[5] = 'r';
+            buff[6] = '\0';
         }
-        else
-        {
+        else{                                        // 3
             for(i = 0; i < 3; i ++){
-                printf("%c", Entry.FileNameExtension[i]);
+                buff[i] = Entry.FileNameExtension[i];
             }
-            printf("%13s", space);
+            buff[i] = '\0';
         }
+        printf("%-30s", buff);
 
         // => size
         if(Entry.FileAttributes == 0x00){
-            printf("%-16d", Entry.FileSize);
+            printf("%-30d", Entry.FileSize);
         }
-        else
-        {
-            printf("%16s", space);
+        else{
+            printf("%30s", space);
         }
 
         // => date
@@ -78,8 +89,8 @@ void IO_DisplayCurDir()                 // folder content: files, subdirs
         date.Month = Entry.ModifiedDate % (uint16_t)pow(2, 4);
         Entry.ModifiedDate = Entry.ModifiedDate >> 4;
         date.Year = Entry.ModifiedDate % (uint16_t)pow(2, 7);
-        printf("%02d/%02d/%04d", date.Day, date.Month, date.Year + BASE_YEAR);
-        printf("%6s", space);
+        printf("%02d/%02d/%04d", date.Day, date.Month, date.Year + BASE_YEAR);              // 10
+        printf("%20s", space);                                                              // 30 - 10
 
         // => time
         time.Second = (Entry.ModifiedTime % (uint16_t)pow(2, 5)) * 2;
