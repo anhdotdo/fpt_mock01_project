@@ -67,16 +67,16 @@ typedef struct
 
 typedef struct 
 {
-    uint8_t Hour;
-    uint8_t Minute;
-    uint8_t Second;
+    uint8_t Second : 5;
+    uint8_t Minute : 6;
+    uint8_t Hour : 5;
 }FAT_Time_Type;
 
 typedef struct 
 {
-    uint8_t Year;
-    uint8_t Month;
-    uint8_t Day;
+    uint16_t Day : 5;
+    uint16_t Month : 4;
+    uint16_t Year : 7;
 }FAT_Date_Type;
 
 

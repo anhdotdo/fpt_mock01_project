@@ -28,8 +28,8 @@ void IO_DisplayCurDir()                 // folder content: files, subdirs
 {
     uint32_t idx, i;
     Directory_Entry_Type Entry;
-    FAT_Time_Type time;
-    FAT_Date_Type date;
+    FAT_Time_Type *time;
+    FAT_Date_Type *date;
     uint8_t *space = " ";
     uint8_t buff[30];
 
@@ -83,22 +83,14 @@ void IO_DisplayCurDir()                 // folder content: files, subdirs
             printf("%30s", space);
         }
 
-        // => date
-        date.Day = Entry.ModifiedDate % (uint16_t)pow(2, 5);
-        Entry.ModifiedDate = Entry.ModifiedDate >> 5;
-        date.Month = Entry.ModifiedDate % (uint16_t)pow(2, 4);
-        Entry.ModifiedDate = Entry.ModifiedDate >> 4;
-        date.Year = Entry.ModifiedDate % (uint16_t)pow(2, 7);
-        printf("%02d/%02d/%04d", date.Day, date.Month, date.Year + BASE_YEAR);              // 10
+        // => date y/m/d:7/4/5
+        date = (FAT_Date_Type*)&Entry.ModifiedDate;
+        printf("%02d/%02d/%04d", date->Day, date->Month, date->Year + BASE_YEAR);              // 10
         printf("%20s", space);                                                              // 30 - 10
 
-        // => time
-        time.Second = (Entry.ModifiedTime % (uint16_t)pow(2, 5)) * 2;
-        Entry.ModifiedTime = Entry.ModifiedTime >> 5;
-        time.Minute = Entry.ModifiedTime % (uint16_t)pow(2, 6);
-        Entry.ModifiedTime = Entry.ModifiedTime >> 6;
-        time.Hour = Entry.ModifiedTime % (uint16_t)pow(2, 5);
-        printf("%02d:%02d:%02d", time.Hour, time.Minute, time.Second);
+        // => time  h:m:s//5:6:5
+        time = (FAT_Time_Type*)&Entry.ModifiedTime;
+        printf("%02d:%02d:%02d", time->Hour, time->Minute, time->Second * 2);
 
         printf("\n");
     }
